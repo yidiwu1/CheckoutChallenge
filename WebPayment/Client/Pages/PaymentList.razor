@@ -29,7 +29,7 @@ else
                 <td>@payment.Status</td>
                 <td>@payment.OrderID</td>
                 <td>@payment.Order.Description</td>
-                <td>@payment.Order.Amount.ToString("c")</td>
+                <td>@payment.Order.Amount</td>
                 <td><span class="fas fa-sync list-action" @onclick="@(async()=>await GetStatus(payment))"> check payment</span></td>
             </tr>
             }
