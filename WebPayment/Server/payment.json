@@ -1,0 +1,1 @@
+{"Amount":{"Currency":"EUR","Value":3000.0},"Reference":"Yidi_checkoutChallenge30","ReturnUrl":"http://localhost:5000/checkout?paymentId=30","MerchantAccount":"AdyenRecruitmentCOM","PaymentMethod":{"ValueKind":1},"BillingAddress":{"ValueKind":1},"BrowserInfo":{"ValueKind":1}}

@@ -1,0 +1,105 @@
+﻿@page "/orderlist"
+@inject IOrdersHttpClient orderClient
+@inject NavigationManager NavigationManager
+
+<h1>Orders</h1>
+
+@if (orders == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th></th>
+                <th></th>
+                <th>Date</th>
+                <th>Order ID</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Payment</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in orders)
+            {
+                <tr>
+                    <td><span class="fas fa-trash-alt list-action" @onclick="@(async () => await DeleteOrder(order))"></span></td>
+                    <td><span class="fas fa-edit list-action" @onclick="@(()=>UpdateOrder(order))"></span></td>
+                    <td>@order.OrderDate.ToShortDateString()</td>
+                    <td>@order.OrderID</td>
+                    <td>@order.Description</td>
+                    <td>@order.Amount.ToString("c")</td>
+                    <td>
+                        @if (order.IsPaid)
+                        {
+                            <span class="fas fa-check-circle list-checked"></span>
+                        }
+                        else
+                        {
+                            <span class="fas fa-euro-sign list-action" @onclick="@(()=>PayOrder(order))"></span>
+                        }
+                    </td>
+                </tr>
+            }
+            <tr>
+                <td><span class="fas fa-plus" @onclick="NewOrder"></span></td>
+            </tr>
+        </tbody>
+    </table>
+    @if (editOrder != null)
+    {
+        <OrderForm Order="@editOrder" OnSaved="OrderSaved" OnCreated="OrderCreated"></OrderForm>
+    }
+    <div id="dropin-container"></div>
+}
+
+@code {
+    private List<OrderStatus> orders;
+    private OrderStatus editOrder;
+
+    protected override async Task OnInitializedAsync()
+    {
+        orders = await orderClient.Get();
+    }
+
+    private void SelectOrder(OrderStatus order)
+    {
+        editOrder = order;
+    }
+
+    private async Task DeleteOrder(OrderStatus order)
+    {
+        await orderClient.Delete(order.OrderID);
+        orders.Remove(order);
+    }
+
+    private void UpdateOrder(OrderStatus order)
+    {
+        editOrder = order;
+    }
+
+    private void OrderSaved()
+    {
+        editOrder = null;
+        StateHasChanged();
+    }
+
+    private void NewOrder()
+    {
+        editOrder = new OrderStatus();
+    }
+
+    private void OrderCreated(IOrder order)
+    {
+        orders.Add(new OrderStatus(order));
+        StateHasChanged();
+    }
+
+    private void PayOrder(OrderStatus order)
+    {
+        NavigationManager.NavigateTo($"payment?orderid={order.OrderID}");
+    }
+}

@@ -1,0 +1,36 @@
+﻿@page "/payment"
+@inject IJSRuntime JSRuntime;
+@inject IPaymentHttpClient PaymentClient;
+@inject IOrdersHttpClient OrderClient;
+@inject NavigationManager NavigationManager
+
+<h1>Checkout</h1>
+@if (order == null)
+{
+    <p><em>Loading...</em></p>
+}
+<div id="dropin-container"></div>
+
+
+@code {
+    IOrder order;
+    protected override async Task OnInitializedAsync()
+    {
+        var queryString = HttpUtility.ParseQueryString(new Uri(NavigationManager.Uri).Query);
+        string orderId = queryString["orderId"];
+        string redirectData = queryString["redirectResult"];
+        if (!int.TryParse(orderId, out int id))
+        {
+            NavigationManager.NavigateTo("orderlist");
+        }
+        else
+        {
+            order = await OrderClient.Get(id);
+
+            var paymentMethods = await PaymentClient.GetPaymentMethods(order.Amount);
+            var paymentClientRef = DotNetObjectReference.Create(PaymentClient);
+
+            await JSRuntime.InvokeVoidAsync("createAdyenCheckout", paymentMethods, paymentClientRef, order.OrderID);
+        }
+    }
+}

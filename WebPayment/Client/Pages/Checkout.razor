@@ -1,0 +1,96 @@
+﻿@page "/checkout"
+@inject IPaymentHttpClient PaymentClient
+@inject NavigationManager NavigationManager
+@using Microsoft.Extensions.Logging;
+@inject ILogger<Checkout> _logger
+
+<h3>Checkout</h3>
+@if (payment == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>
+        Your order has been paid succesfully.
+    </p>
+    <div class="card border-radias-12">
+        <div class="card-body p-3 bg-light">
+            <div class="d-none d-sm-block">
+                <table class="table table-sm mb-0 ">
+                    <tbody>
+                        <tr>
+                            <td>
+                                Order number
+                            </td>
+                            <td class="td-truncate">
+                                @payment.Order.OrderID
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Description
+                            </td>
+                            <td class="td-truncate">
+                                @payment.Order.Description
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                Amount
+                            </td>
+                            <td class="td-truncate">
+                                @payment.Order.Amount.ToString("c")
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Status
+                            </td>
+                            <td class="td-truncate">
+                                @payment.Status
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-darker btn-block btn-larger" @onclick="BackHome"> Show orders </button>
+            </div>
+        </div>
+}
+
+            @code {
+                private Payment payment;
+
+                protected override async Task OnInitializedAsync()
+                {
+                    var queryString = HttpUtility.ParseQueryString(new Uri(NavigationManager.Uri).Query);
+                    string paymentId = queryString["paymentId"];
+                    if (!int.TryParse(paymentId, out int id))
+                    {
+                        NavigationManager.NavigateTo("orderlist");
+                    }
+                    else
+                    {
+                        payment = await PaymentClient.Get(id);
+                        if (payment == null)
+                        {
+                            NavigationManager.NavigateTo("orderlist");
+                        }
+
+                        payment.RedirectData = queryString["redirectResult"];
+                        payment.MD = queryString["MD"];
+                        payment.PaRes = queryString["paRes"];
+
+                        _logger.LogInformation($"payment: {paymentId} redirect data {payment.RedirectData ?? payment.MD}");
+
+                        payment = await PaymentClient.GetStatus(payment);
+                    }
+                }
+
+                private void BackHome()
+                {
+                    NavigationManager.NavigateTo("orderlist");
+                }
+            }
